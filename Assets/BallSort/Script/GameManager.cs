@@ -1,100 +1,110 @@
-using System.Drawing;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class GameManager : MonoBehaviour
 {
-    [SerializeField] private Tube tubeSelect;
-    [SerializeField] private Tube tubeDestination;
+    public static GameManager instance;
+    
+    [SerializeField] private LevelManager levelManager;
+    [Header("Game Play")]
+    [SerializeField] private LayerMask whatIsMask;
+    private Tube tubeSelect;
+    private Tube tubeDestination;
+    private int count = 0;
+    public System.Action OnYouWinHandler; // delegate check người chơi win
 
-    [Header("Input")]
-    [SerializeField] private LayerMask layerMask;
+    private void Awake()
+    {
+        instance = this;
+    }
 
-    // Update is called once per frame
+    private void Start()
+    {
+        OnYouWinHandler += OnCheckWinHandler;
+    }
 
-    #region Input Game
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.Mouse0))
+        //if (!levelManager.GameStart) return;
+
+        if (Input.GetMouseButtonDown(0))
         {
-            Vector2 mousPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-            RaycastHit2D hit = Physics2D.Raycast(mousPos, Vector2.zero, float.PositiveInfinity, layerMask);
+            Vector2 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            RaycastHit2D touch = Physics2D.Raycast(mousePos, Vector2.zero, float.PositiveInfinity, whatIsMask);
 
-            if (hit.collider != null)
+            if (touch.collider == null) return;
+
+            if (tubeSelect == null)
             {
-                if (tubeSelect == null)
-                {
-                    tubeSelect = hit.collider.GetComponent<Tube>();
-                    tubeSelect.SelectBall();
-                }
-                else if(tubeSelect != null && tubeDestination == null && hit.collider.GetComponent<Tube>() != tubeSelect)
-                {
-                    tubeDestination = hit.collider.GetComponent<Tube>();
-                    int size = tubeDestination.GetBallInTube().Count;
-
-
-                    if (canMoveBall())
-                    {
-                        Vector3[] points = new Vector3[]
-                        {
-                            tubeSelect.TopPos.position,
-                            tubeDestination.TopPos.position,
-                        };
-
-                        tubeSelect.MoveAllBall(points, () =>
-                        {
-                            Debug.Log("Call back");
-                            //CheckWin();
-
-
-                            tubeSelect.tmp = null;
-                            tubeSelect = null;
-                            tubeDestination = null;
-                        });
-                    }
-                    else
-                    {
-                        tubeSelect.tmp.changeBody();
-                        tubeSelect.tmp = null;
-                        tubeDestination = null;
-                        tubeSelect = null;
-                    }
-                }
+                tubeSelect = touch.collider.GetComponent<Tube>();
+                tubeSelect.SelectBall();
             }
+            else if (tubeSelect != null && touch.collider.GetComponent<Tube>() != tubeSelect && tubeDestination == null)
+            {
+                tubeDestination = touch.collider.GetComponent<Tube>();
+                Vector2 start = tubeSelect.TopPos.position;
+                Vector2 end = tubeDestination.TopPos.position;
+                if (canMoveBall())
+                {
+                    tubeSelect.MoveSenquence(start, end, start.y + end.y);
+                    tubeSelect.tmp = null;
+                    tubeSelect = null;
+                    tubeDestination = null;
+                }
+                else
+                {
+                    tubeSelect.tmp.changeBodyRb();
+                    tubeSelect.ResetBallCanMove();
+                    tubeSelect.tmp = null;
+                    tubeSelect = null;
+                    tubeDestination = null;
+                }
+                return;
+            }
+
+            Invoke("ResetSelect", 2f);
         }
     }
-    #endregion
 
-
-    private void CheckWin()
+    private void OnCheckWinHandler()
     {
-        if (tubeDestination == null) return;
-
-        int winCondition = 0;
-
-        for(int i = 0; i < tubeDestination.GetBallInTube().Count; i++)
-        {
-            if(tubeDestination.GetBallInTube()[i].Type == tubeDestination.GetBallInTube()[i + 1].Type)
-            {
-                winCondition++;
-            }
-        }
-
-        if(winCondition == 4)
+        count++;
+        if(count == levelManager.MaxTube)
         {
             Debug.Log("You win");
         }
     }
 
+    private void ResetSelect()
+    {
+        if (tubeDestination != null) return;
+
+
+        if(tubeSelect == null) return;
+        tubeSelect.tmp = null;
+        tubeSelect.ResetBallCanMove();
+        tubeSelect = null;
+    }
 
     private bool canMoveBall()
     {
-        if(tubeDestination == null) return false;
+        if(tubeSelect == null || tubeDestination == null) return false;
 
-
-        int size = tubeDestination.GetBallInTube().Count;
-        if (tubeSelect.tmp.Type == tubeDestination.GetBallInTube()[size - 1].Type
-            && tubeSelect.GetAmountBallToMove().Count < tubeDestination.MaxBall)
+        if (tubeDestination.GetAmountBall() == 4)
         {
+            Debug.Log("Tube không còn đủ sức chứa");
+            return false;
+        }
+
+        Ball tmp = tubeSelect.tmp;
+        if(tmp.Type == tubeDestination.GetTypeBallTop())
+        {
+            Debug.Log("Bóng trên cùng của tube destination cùng màu, được phép di chuyển đến");
+            return true;
+        }
+
+        if(tubeDestination.GetAmountBall() == 0)
+        {
+            Debug.Log("TubeDestination hiện đang rỗng, được phép di chuyển đến");
             return true;
         }
 
