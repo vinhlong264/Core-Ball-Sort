@@ -1,6 +1,5 @@
 ﻿using System.Collections;
 using UnityEngine;
-using UnityEngine.XR;
 
 public class Ball : MonoBehaviour
 {
@@ -12,11 +11,11 @@ public class Ball : MonoBehaviour
 
     private void Start()
     {
-        duration = 1.5f;
+        duration = 1f;
         rb = GetComponent<Rigidbody2D>();
     }
 
-    public void MoveBallTop(Vector2 pos)
+    public void MoveBallTop(Vector2 pos) // hàm dùng để di chuyển ball lên đỉnh của tube được chọn
     {
         rb.bodyType = RigidbodyType2D.Kinematic;
         StartCoroutine(MoveBallTopCrountine(pos));
@@ -37,7 +36,7 @@ public class Ball : MonoBehaviour
         rb.bodyType = RigidbodyType2D.Dynamic;
     }
 
-    public void MoveBallDestination(Vector2 startPos, Vector2 endPos , float height)
+    public void MoveBallDestination(Vector2 startPos, Vector2 endPos, float height) // Di chuyển ball được chọn đến đích
     {
         StopCoroutine(MoveBallTopCrountine(startPos));
         StartCoroutine(MoveBallDestinationCroutine(startPos, endPos, height));
@@ -49,14 +48,14 @@ public class Ball : MonoBehaviour
 
         while (elapsed < duration)
         {
-            transform.position = GetPos(startPos, destination, elapsed/duration , height);
             elapsed += Time.deltaTime;
+            transform.position = GetPos(startPos, destination, elapsed / duration, height);
             yield return null;
         }
-       transform.position = destination; // Đảm bảo đến đúng đích
+        transform.position = destination;
     }
 
-    private Vector3 GetPos(Vector2 startPos, Vector2 destination , float t , float height) // Tính toán điểm di chuyển từ startPos -> endPos
+    private Vector3 GetPos(Vector2 startPos, Vector2 destination, float t, float height) // Tính toán điểm di chuyển từ startPos -> endPos
     {
         // tính chiều ngang mà bóng tới
         float x = Mathf.Lerp(startPos.x, destination.x, t);

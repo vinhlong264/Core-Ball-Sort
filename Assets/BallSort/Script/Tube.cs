@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -6,17 +7,20 @@ public class Tube : MonoBehaviour
 {
     public Ball tmp { get; set; }
 
-    private Stack<Ball> balls = new Stack<Ball>();
+    private Stack<Ball> balls = new Stack<Ball>(); // Stack chứa các ball trong tube
+    [SerializeField] private List<Ball> ballsInTube = new List<Ball>(); // List chứa các ball trong tube
     [SerializeField] private List<Ball> amountBallCanMove = new List<Ball>();
-    [SerializeField] private List<Ball> ballsInTube = new List<Ball>();
 
     [SerializeField] private Transform topPos;
     private bool canWin; //biến kiểm tra xem ông này đã đủ đk thắng chưa
+    private int maxBall = 4;
 
     public Transform TopPos { get => topPos; }
     public bool CanWin { get => canWin; }
 
-    public void SelectBall(System.Action callBack = null)
+    public List<Ball> AmountCanMove { get => amountBallCanMove; }
+
+    public void SelectBall(System.Action callBack = null) //Chọn ball ở đỉnh
     {
         if (balls.Count == 0) return;
 
@@ -26,30 +30,35 @@ public class Tube : MonoBehaviour
         ballsInTube.Remove(tmp);
         tmp.MoveBallTop((Vector2)topPos.position);
 
-        while(balls.Count > 0)
+        while(balls.Count > 0) // Lấy ra tất cả các ball cùng màu với ball Tmp(đã được lấy ra)
         {
             if (!BallSameColor())
             {
                 break;
             }
             Ball ball = balls.Pop();
-            Debug.Log("Ball take: "+ball.name);
             amountBallCanMove.Add(ball);
             ballsInTube.Remove(ball);
         }
+
         callBack?.Invoke();
     }
 
-    private bool BallSameColor()
+    private bool BallSameColor() // kiểm tra màu ball
     {
-        if (balls.Count == 0) return false;
+        if (balls.Count == 0) return false; // nếu ball hiện tại đang rỗng sẽ trả về false
 
-        if(balls.Peek().Type == tmp.Type)
+        if(balls.Peek().Type == tmp.Type) // nếu màu của ball ở đỉnh hiện tại cùng loại với ball đã được lấy ra trước đó thì trả về true
         {
             return true;
         }
-
         return false;
+    }
+
+    public void ResetTube()
+    {
+        balls.Clear();
+        ballsInTube.Clear();
     }
 
     public void MoveSenquence(Vector2 startPos , Vector2 endPos , float height)
@@ -69,29 +78,35 @@ public class Tube : MonoBehaviour
     {
         for(int i = 0; i < amountBallCanMove.Count; i++)
         {
-            yield return new WaitForSeconds(0.75f);
-            yield return null;
+            yield return new WaitForSeconds(0.6f);
             amountBallCanMove[i].MoveBallDestination(startPos, endPos, height);
         }
-        ResetBallCanMove();
-    }
 
-    public void addBall(Ball newBall, System.Action callback = null)
+        ResetBallCanMove();
+        Debug.Log(amountBallCanMove.Count);
+    }
+    public void addBall(Ball newBall) // addBall
     {
+        if(balls.Count == maxBall) return;
+
         balls.Push(newBall);
         ballsInTube.Add(newBall);
         TubeFullColor();
-
-        callback?.Invoke();
     }
 
-    public void ResetBallCanMove()
+    public void ResetBallCanMove() // reset các ball đã được di chuyển đi
     {
-        if(amountBallCanMove.Count == 0) return;
         amountBallCanMove.Clear();
     }
 
-    public int GetAmountBall()
+    public int AmountBallCanMove()
+    {
+        if (ballsInTube.Count == 0) return 0;
+
+        return balls.Count;
+    }
+
+    public int GetAmountBall() // lấy ra số lượng ball hiện tại
     {
         if (balls.Count == 0)
         {
@@ -101,7 +116,12 @@ public class Tube : MonoBehaviour
         return balls.Count;
     }
 
-    public ColorType GetTypeBallTop()
+    public int GetSpace() //Tính toán khoảng trống cho đủ để các ball di chuyển tới không
+    {
+        return maxBall - balls.Count;
+    }
+
+    public ColorType GetTypeBallTop() // lấy ra loại màu ball ở đỉnh
     {
         if(canWin) return ColorType.NONE;
 
@@ -136,15 +156,6 @@ public class Tube : MonoBehaviour
             canWin = true;
             Debug.Log($"Tube {this.gameObject.name} win, đã đủ số màu");
             GameManager.instance.OnYouWinHandler?.Invoke();
-        }
-    }
-
-    private void OnTriggerEnter2D(Collider2D collision)
-    {
-        if (collision.CompareTag("Ball"))
-        {
-            addBall(collision.GetComponent<Ball>());
-            
         }
     }
 }
