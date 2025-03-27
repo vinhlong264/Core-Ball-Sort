@@ -718,6 +718,7 @@ MonoBehaviour:
   levelMangaer: {fileID: 1581379523}
   youWinPanel: {fileID: 237324549}
   ResetBtn: {fileID: 76252762}
+  UndoBtn: {fileID: 1419864154}
 --- !u!1 &540778137
 GameObject:
   m_ObjectHideFlags: 0
@@ -1883,6 +1884,7 @@ MonoBehaviour:
   - {fileID: 326439076818550116, guid: 1d1711c8727a2f14cb08a490236faabe, type: 3}
   maxBall: 4
   parent: {fileID: 1396809176}
+  numberTubeEmpty: 2
   ballColorDumps: 
 --- !u!1 &1624277652
 GameObject:

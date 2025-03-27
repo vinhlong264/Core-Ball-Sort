@@ -76,3 +76,22 @@ public enum ColorType
 {
     RED, BLUE, GREEN, YELLOW, NONE
 }
+
+[System.Serializable]
+public class StepMove
+{
+    public Ball ball; // lưu trữ ball đã di chuyển của sau các bước chọn
+    public Tube tubeSelect; // Vị trí Tube cũ của ball
+    public Tube tubeDestination; // vị trí điểm đến mới của ball
+    public Transform start; //Điểm bắt đầu di chuyển
+    public Transform end; //Điểm kết thúc di chuyển
+
+    public StepMove(Ball ball, Tube tubeSelect, Tube tubeDestination, Transform start, Transform end)
+    {
+        this.ball = ball;
+        this.tubeSelect = tubeSelect;
+        this.tubeDestination = tubeDestination;
+        this.start = start;
+        this.end = end;
+    }
+}

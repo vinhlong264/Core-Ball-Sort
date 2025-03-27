@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -30,7 +29,7 @@ public class Tube : MonoBehaviour
         ballsInTube.Remove(tmp);
         tmp.MoveBallTop((Vector2)topPos.position);
 
-        while(balls.Count > 0) // Lấy ra tất cả các ball cùng màu với ball Tmp(đã được lấy ra)
+        while (balls.Count > 0) // Lấy ra tất cả các ball cùng màu với ball Tmp(đã được lấy ra)
         {
             if (!BallSameColor())
             {
@@ -48,27 +47,33 @@ public class Tube : MonoBehaviour
     {
         if (balls.Count == 0) return false; // nếu ball hiện tại đang rỗng sẽ trả về false
 
-        if(balls.Peek().Type == tmp.Type) // nếu màu của ball ở đỉnh hiện tại cùng loại với ball đã được lấy ra trước đó thì trả về true
+        if (balls.Peek().Type == tmp.Type) // nếu màu của ball ở đỉnh hiện tại cùng loại với ball đã được lấy ra trước đó thì trả về true
         {
             return true;
         }
         return false;
     }
 
-    public void ResetTube()
+    public void ResetTube() // Reset Tube để trả về trạng thái ban đầu
     {
-        balls.Clear();
+        while(balls.Count > 0)
+        {
+            balls.Pop();
+        }
         ballsInTube.Clear();
+
+        Debug.Log("StackBall: "+balls.Count);
+        Debug.Log("ListBall: " + balls.Count);
     }
 
-    public void MoveSenquence(Vector2 startPos , Vector2 endPos , float height)
+    public void MoveSenquence(Vector2 startPos, Vector2 endPos, float height)
     {
-        if(amountBallCanMove.Count == 1) // nếu số lượng ball có thể di chuyển chỉ có 1 thì di chuyển duy nhất ball đó
+        if (amountBallCanMove.Count == 1) // nếu số lượng ball có thể di chuyển chỉ có 1 thì di chuyển duy nhất ball đó
         {
             amountBallCanMove[0].MoveBallDestination(startPos, endPos, height);
             ResetBallCanMove();
         }
-        else if(amountBallCanMove.Count > 1)
+        else if (amountBallCanMove.Count > 1)
         {
             StartCoroutine(MoveSenquenceCroutine(startPos, endPos, height));
         }
@@ -76,10 +81,10 @@ public class Tube : MonoBehaviour
 
     IEnumerator MoveSenquenceCroutine(Vector2 startPos, Vector2 endPos, float height) // Hàm di chuyển 1 lúc nhiều ball
     {
-        for(int i = 0; i < amountBallCanMove.Count; i++)
+        for (int i = 0; i < amountBallCanMove.Count; i++)
         {
-            yield return new WaitForSeconds(0.6f);
             amountBallCanMove[i].MoveBallDestination(startPos, endPos, height);
+            yield return new WaitForSeconds(1);
         }
 
         ResetBallCanMove();
@@ -87,11 +92,17 @@ public class Tube : MonoBehaviour
     }
     public void addBall(Ball newBall) // addBall
     {
-        if(balls.Count == maxBall) return;
+        if (balls.Count == maxBall) return;
 
         balls.Push(newBall);
         ballsInTube.Add(newBall);
         TubeFullColor();
+    }
+
+    public void removeBall(Ball newBall) // RemoveBall
+    {
+        balls.Pop();
+        ballsInTube.Remove(newBall);
     }
 
     public void ResetBallCanMove() // reset các ball đã được di chuyển đi
@@ -123,7 +134,7 @@ public class Tube : MonoBehaviour
 
     public ColorType GetTypeBallTop() // lấy ra loại màu ball ở đỉnh
     {
-        if(canWin) return ColorType.NONE;
+        if (canWin) return ColorType.NONE;
 
         if (balls.Count > 0)
         {

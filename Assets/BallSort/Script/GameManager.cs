@@ -1,4 +1,6 @@
-﻿using UnityEngine;
+﻿using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
 
 public class GameManager : MonoBehaviour
 {
@@ -10,6 +12,10 @@ public class GameManager : MonoBehaviour
     private Tube tubeSelect;
     private Tube tubeDestination;
     private int count = 0;
+
+    //Undo
+    private Stack<StepMove> stepMoveStack = new Stack<StepMove>();
+
     [Header("You win infor")]
     [SerializeField] private GameObject youWinPanel;
     public System.Action OnYouWinHandler; // delegate check người chơi win
@@ -33,14 +39,13 @@ public class GameManager : MonoBehaviour
             Vector2 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
             RaycastHit2D touch = Physics2D.Raycast(mousePos, Vector2.zero, float.PositiveInfinity, whatIsMask);
 
-            if (touch.collider == null) return;
+            if (touch.collider == null) return; // kiểm tra xem có chạm vào tube không
 
-            if (tubeSelect == null)
+            if (tubeSelect == null) // Lấy ra tubeSelect từ RaycastHit2D
             {
-                tubeSelect = touch.collider.GetComponent<Tube>();
-                tubeSelect.SelectBall();
+                TouchSelect(touch);
             }
-            else if (tubeSelect != null && touch.collider.GetComponent<Tube>() != tubeSelect && tubeDestination == null)
+            else if (tubeSelect != null && touch.collider.GetComponent<Tube>() != tubeSelect && tubeDestination == null) // Lấy ra TubeDestination từ RaycastHit2D
             {
                 TouchDestination(touch);
                 return;
@@ -48,10 +53,17 @@ public class GameManager : MonoBehaviour
         }
     }
 
-
+    #region Step Select and condition Game
+    private void TouchSelect(RaycastHit2D touch)
+    {
+        tubeSelect = touch.collider.GetComponent<Tube>();
+        tubeSelect.SelectBall();
+    }
     private void TouchDestination(RaycastHit2D touch) // Hàm lấy ra điểm đến
     {
         tubeDestination = touch.collider.GetComponent<Tube>();
+
+
         Vector2 start = tubeSelect.TopPos.position;
         Vector2 end = tubeDestination.TopPos.position;
 
@@ -66,6 +78,8 @@ public class GameManager : MonoBehaviour
                 }
             }
 
+            AddStepMove(tubeSelect.tmp, tubeSelect, tubeDestination , tubeDestination.TopPos, tubeSelect.TopPos); // thêm bước di chuyển vào stack
+
             tubeSelect.MoveSenquence(start, end, (start.y + end.y) - 0.7f); // di chuyển chúng tới đích
             ResetStepSelect();
         }
@@ -73,30 +87,17 @@ public class GameManager : MonoBehaviour
         {
             Debug.Log("Add lại ball được lấy ra: " + tubeSelect.tmp);
             tubeSelect.addBall(tubeSelect.tmp); // add lại ball đã chọn
+
             tubeSelect.tmp.changeBodyRb();
             tubeSelect.ResetBallCanMove();
+
 
             ResetStepSelect();
         }
         return;
     }
 
-    private void ResetStepSelect() // Reset các bước chọn
-    {
-        tubeSelect.tmp = null;
-        tubeSelect = null;
-        tubeDestination = null;
-    }
-    private void OnCheckWinHandler() // Điều kiện win game
-    {
-        count++;
-        Debug.Log("Số tube đã hoàn thành: " + count);
-        if (count == levelManager.MaxTube)
-        {
-            Debug.Log("You win");
-            youWinPanel.SetActive(true);
-        }
-    }
+
     private bool canMoveBall() // hàm bool kiểm tra ball có thể di chuyển không
     {
         if (tubeSelect == null || tubeDestination == null) return false;
@@ -121,6 +122,7 @@ public class GameManager : MonoBehaviour
         {
             if (ballsToMove > spaceAvailable) //Kiểm tra số bóng di chuyển có vượt quá không gian trống không
             {
+                Debug.Log("Có đủ chỗ trống");
                 int excessBalls = ballsToMove - spaceAvailable; // tính ra số bóng tối đa mà destina có thể chứa
                 for (int i = 0; i < excessBalls; i++)
                 {
@@ -132,7 +134,50 @@ public class GameManager : MonoBehaviour
             return true;
         }
 
-
         return false;
     }
+
+    private void ResetStepSelect() // Reset các bước chọn
+    {
+        tubeSelect.tmp = null;
+        tubeSelect = null;
+        if (tubeDestination == null) return;
+
+        tubeDestination = null;
+    }
+    #endregion
+
+
+    private void OnCheckWinHandler() // Điều kiện win game
+    {
+        count++;
+        Debug.Log("Số tube đã hoàn thành: " + count);
+        if (count == levelManager.MaxTube)
+        {
+            Debug.Log("You win");
+            youWinPanel.SetActive(true);
+        }
+    }
+    private void AddStepMove(Ball ball, Tube tubeSelect, Tube tubeDestination , Transform start, Transform end)
+    {
+        if (ball != null)
+        {
+            Debug.Log("Thêm di chuyển của: " + ball.name);
+            StepMove stepMove = new StepMove(ball, tubeSelect,tubeDestination , start , end);
+            stepMoveStack.Push(stepMove);
+        }
+    }
+
+    public StepMove GetMoveStep()
+    {
+        if(stepMoveStack.Count == 0) return null;
+
+        return stepMoveStack.Pop();
+    }
+}
+
+public enum GameState
+{
+    TOUCH,
+    NOTOUCh
 }
