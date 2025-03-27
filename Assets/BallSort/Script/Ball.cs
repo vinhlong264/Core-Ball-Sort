@@ -72,7 +72,7 @@ public class Ball : MonoBehaviour
     }
 }
 
-public enum ColorType
+public enum ColorType // enum quản lý các loại ball
 {
     RED, BLUE, GREEN, YELLOW, NONE
 }

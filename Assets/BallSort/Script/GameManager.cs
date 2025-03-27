@@ -11,10 +11,10 @@ public class GameManager : MonoBehaviour
     [SerializeField] private LayerMask whatIsMask;
     private Tube tubeSelect;
     private Tube tubeDestination;
-    private int count = 0;
+    private int count = 0; // biến đếm số tube đã đủ màu
 
     //Undo
-    private Stack<StepMove> stepMoveStack = new Stack<StepMove>();
+    private Stack<StepMove> stepMoveStack = new Stack<StepMove>(); // Stack để lưu các bước di chuyển
 
     [Header("You win infor")]
     [SerializeField] private GameObject youWinPanel;
@@ -158,17 +158,17 @@ public class GameManager : MonoBehaviour
             youWinPanel.SetActive(true);
         }
     }
-    private void AddStepMove(Ball ball, Tube tubeSelect, Tube tubeDestination , Transform start, Transform end)
+    private void AddStepMove(Ball ball, Tube tubeSelect, Tube tubeDestination , Transform start, Transform end) // hàm thêm các bước di chuyển để Undo
     {
         if (ball != null)
         {
             Debug.Log("Thêm di chuyển của: " + ball.name);
             StepMove stepMove = new StepMove(ball, tubeSelect,tubeDestination , start , end);
-            stepMoveStack.Push(stepMove);
+            stepMoveStack.Push(stepMove); // thêm bước di chuyển
         }
     }
 
-    public StepMove GetMoveStep()
+    public StepMove GetMoveStep() // lấy ra bước di chuyển 
     {
         if(stepMoveStack.Count == 0) return null;
 
