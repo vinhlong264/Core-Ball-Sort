@@ -1,75 +1,63 @@
 ﻿using System.Collections;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class Ball : MonoBehaviour
 {
-    [SerializeField] private ColorType type;
-    public ColorType Type { get => type; }
-    private float duration; // thời gian di chuyển của ball
-    private Rigidbody2D rb;
-    private int index;
+    [SerializeField] private ColorType ballType;
+    private float duration = 1f;
+    public ColorType BallType { get => ballType; }
 
-    private void Start()
+    public void Move(Vector2 posDestination) // di chuyển Ball lên vị trí đỉnh Tube
     {
-        duration = 1f;
-        rb = GetComponent<Rigidbody2D>();
+        StartCoroutine(MoveCroutine(posDestination));
     }
 
-    public void MoveBallTop(Vector2 pos) // hàm dùng để di chuyển ball lên đỉnh của tube được chọn
-    {
-        rb.bodyType = RigidbodyType2D.Kinematic;
-        StartCoroutine(MoveBallTopCrountine(pos));
-    }
 
-    IEnumerator MoveBallTopCrountine(Vector2 pos)
+    public void MoveDestination(Vector2[] destinationPos , Vector2 targetPos , float height)
     {
-        float time = 0;
-        Vector3 startPos = transform.position;
-        Vector3 EndPos = pos;
-        while (time < duration)
+        StartCoroutine(MoveDestinationCroutine(destinationPos, height, () =>
         {
-            transform.position = Vector3.Lerp(startPos, EndPos, time / duration);
-            time += Time.deltaTime;
+            StartCoroutine(MoveCroutine(targetPos));
+        }));
+    }
+
+    private IEnumerator MoveDestinationCroutine(Vector2[] posDestination, float height, System.Action callBack)
+    {
+        float t = 0;
+        while (t < duration)
+        {
+            t += Time.deltaTime;
+            transform.position = GetPos(posDestination[0], posDestination[1], t/duration, height);
             yield return null;
         }
-        yield return new WaitForSeconds(1f);
-        rb.bodyType = RigidbodyType2D.Dynamic;
+        transform.position = posDestination[1];
+
+        callBack?.Invoke();
     }
-
-    public void MoveBallDestination(Vector2 startPos, Vector2 endPos, float height) // Di chuyển ball được chọn đến đích
+    private IEnumerator MoveCroutine(Vector2 pos)
     {
-        StopCoroutine(MoveBallTopCrountine(startPos));
-        StartCoroutine(MoveBallDestinationCroutine(startPos, endPos, height));
-    }
-
-    IEnumerator MoveBallDestinationCroutine(Vector2 startPos, Vector2 destination, float height)
-    {
-        float elapsed = 0f;
-
-        while (elapsed < duration)
+        float t = 0;
+        Vector2 startPos = transform.position;
+        Vector2 endPos = pos;
+        while(t < duration)
         {
-            elapsed += Time.deltaTime;
-            transform.position = GetPos(startPos, destination, elapsed / duration, height);
+            transform.position = Vector3.Lerp(startPos, endPos, t);
+            t += Time.deltaTime;
             yield return null;
         }
-        transform.position = destination;
+        transform.position = endPos;
     }
 
-    private Vector3 GetPos(Vector2 startPos, Vector2 destination, float t, float height) // Tính toán điểm di chuyển từ startPos -> endPos
+    private Vector2 GetPos(Vector2 start , Vector2 end , float t , float height)
     {
-        // tính chiều ngang mà bóng tới
-        float x = Mathf.Lerp(startPos.x, destination.x, t);
+        float x = Mathf.Lerp(start.x , end.x , t); // tính toán chiều ngang di chuyển
+        float y = Mathf.Lerp(start .y , end.y , t) + height  * 4 * t * (1 - t); // tính toán chiều dọc di chuyển
 
-        // tính độ cao mà ball sẽ tới
-        float y = Mathf.Lerp(startPos.y, destination.y, t) + height * 4 * t * (1 - t);
-
-        return new Vector3(x, y);
+        return new Vector2(x, y);
     }
 
-    public void changeBodyRb()
-    {
-        rb.bodyType = RigidbodyType2D.Dynamic;
-    }
+
 }
 
 public enum ColorType // enum quản lý các loại ball

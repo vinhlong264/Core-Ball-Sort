@@ -22,23 +22,23 @@ public class UIManager : MonoBehaviour
 
     private void UndoHandle()
     {
-        StepMove getStep = GameManager.instance.GetMoveStep();
+        //StepMove getStep = GameManager.instance.GetMoveStep();
 
-        Debug.Log(getStep);
-        if (getStep != null)
-        {
-            Ball newBall = getStep.ball;
-            Tube tubeOld = getStep.tubeSelect;
-            Tube tubeNew = getStep.tubeDestination;
+        //Debug.Log(getStep);
+        //if (getStep != null)
+        //{
+        //    Ball newBall = getStep.ball;
+        //    Tube tubeOld = getStep.tubeSelect;
+        //    Tube tubeNew = getStep.tubeDestination;
 
-            tubeOld.addBall(newBall);
-            tubeNew.removeBall(newBall);
+        //    tubeOld.addBall(newBall);
+        //    tubeNew.removeBall(newBall);
 
-            Vector2 start = getStep.start.position;
-            Vector2 end = getStep.end.position;
+        //    Vector2 start = getStep.start.position;
+        //    Vector2 end = getStep.end.position;
 
-            newBall.MoveBallDestination(start, end, (start.y + end.y) - 0.7f);
-        }
+        //    newBall.MoveBallDestination(start, end, (start.y + end.y) - 0.7f);
+        //}
     }
     
 }

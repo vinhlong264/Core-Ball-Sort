@@ -4,186 +4,173 @@ using UnityEngine;
 
 public class Tube : MonoBehaviour
 {
-    public Ball tmp { get; set; }
-
-    private Stack<Ball> balls = new Stack<Ball>(); // Stack chứa các ball trong tube
-    [SerializeField] private List<Ball> ballsInTube = new List<Ball>(); // List chứa các ball trong tube
-    [SerializeField] private List<Ball> amountBallCanMove = new List<Ball>();
     [SerializeField] private Transform topPos;
-    private bool canWin; //biến kiểm tra xem ông này đã đủ đk thắng chưa
-    private int maxBall = 4;
+    [SerializeField] private List<Ball> ballsInTube = new List<Ball>();
+    [SerializeField] private List<Ball> ballsCanMove = new List<Ball>();
+    private Stack<Ball> StackBalls = new Stack<Ball>();
+    private Vector2[] posArray;
+    private bool canWin;
+    private int maxBall;
 
+    public Ball tmp { get; set; }
+    private Vector2 prePos;
+
+    public Vector2[] PosArray { get => posArray; }
     public Transform TopPos { get => topPos; }
-    public bool CanWin { get => canWin; }
-
-    public List<Ball> AmountCanMove { get => amountBallCanMove; }
-
-    private SpriteRenderer sr;
-    [SerializeField] private Vector2[] pos;
-
-    private void Start()
+    public List<Ball> BallsCanMove { get =>  ballsCanMove;}
+    private void OnEnable()
     {
+        maxBall = 4;
         InitPos();
     }
 
     private void InitPos()
     {
-        pos = new Vector2[4];
-        for (int i = 0; i < transform.localScale.y; i++)
+        posArray = new Vector2[4];
+        float ofsetBall = 1f;
+        float tubeHeight = transform.localScale.y;
+        float tubeBottomY = transform.position.y - (tubeHeight / 2f);
+
+        for (int i = 0; i < 4; i++)
         {
-            Vector2 newPos = new Vector2(transform.localPosition.x, i - 1.5f);
-            pos[i] = newPos;
+            float yPos = tubeBottomY + (i * ofsetBall) + (ofsetBall / 2);
+            Vector2 newPos = new Vector2(transform.position.x, yPos);
+            posArray[i] = newPos;
         }
+
     }
 
-    public void SelectBall(System.Action callBack = null) //Chọn ball ở đỉnh
+    public void SelectBall()
     {
-        if (balls.Count == 0) return;
-
-        tmp = balls.Pop();
-        amountBallCanMove.Add(tmp);
-
+        tmp = StackBalls.Pop();
         ballsInTube.Remove(tmp);
-        tmp.MoveBallTop((Vector2)topPos.position);
+        ballsCanMove.Add(tmp);
 
-        while (balls.Count > 0) // Lấy ra tất cả các ball cùng màu với ball Tmp(đã được lấy ra)
+        prePos = tmp.transform.position;
+        tmp.Move(topPos.position);
+
+        while(StackBalls.Count > 0)
         {
-            if (!BallSameColor())
+            if (!checkBallSameColor())
             {
                 break;
             }
-            Ball ball = balls.Pop();
-            amountBallCanMove.Add(ball);
-            ballsInTube.Remove(ball);
-        }
 
-        callBack?.Invoke();
+            Ball getBall = StackBalls.Pop();
+            ballsCanMove.Add(getBall);
+            ballsInTube.Remove(getBall);
+        }
     }
 
-    private bool BallSameColor() // kiểm tra màu ball
+    public void ReturnTube()
     {
-        if (balls.Count == 0) return false; // nếu ball hiện tại đang rỗng sẽ trả về false
-
-        if (balls.Peek().Type == tmp.Type) // nếu màu của ball ở đỉnh hiện tại cùng loại với ball đã được lấy ra trước đó thì trả về true
+        for (int i = ballsCanMove.Count - 1; i >= 0; i--)
         {
-            return true;
+            addBall(ballsCanMove[i]);
         }
-        return false;
+
+        ballsCanMove.Clear();
+
+        tmp.Move(prePos);
+        tmp = null;
     }
 
-    public void ResetTube() // Reset Tube để trả về trạng thái ban đầu
+    public void MoveSenquence(Tube tubeDestination , float height)
     {
-        while(balls.Count > 0)
+        StartCoroutine(SenquenceCroutine(tubeDestination, height));
+    }
+
+    IEnumerator SenquenceCroutine(Tube tubeDestination, float height)
+    {
+        Vector2[] newPos = new Vector2[]
         {
-            balls.Pop();
-        }
-        ballsInTube.Clear();
+            topPos.position,
+            tubeDestination.topPos.position
+        };
 
-        Debug.Log("StackBall: "+balls.Count);
-        Debug.Log("ListBall: " + balls.Count);
-    }
-
-    public void MoveSenquence(Vector2 startPos, Vector2 endPos, float height)
-    {
-        if (amountBallCanMove.Count == 1) // nếu số lượng ball có thể di chuyển chỉ có 1 thì di chuyển duy nhất ball đó
+        for(int i = 0; i < ballsCanMove.Count; i++)
         {
-            amountBallCanMove[0].MoveBallDestination(startPos, endPos, height);
-            ResetBallCanMove();
-        }
-        else if (amountBallCanMove.Count > 1)
-        {
-            StartCoroutine(MoveSenquenceCroutine(startPos, endPos, height));
-        }
-    }
-
-    IEnumerator MoveSenquenceCroutine(Vector2 startPos, Vector2 endPos, float height) // Hàm di chuyển 1 lúc nhiều ball
-    {
-        for (int i = 0; i < amountBallCanMove.Count; i++)
-        {
-            amountBallCanMove[i].MoveBallDestination(startPos, endPos, height);
-            yield return new WaitForSeconds(1);
+            int index = tubeDestination.GetEmptySlot();
+            if (index != -1)
+            {
+                Vector2 targetPos = tubeDestination.PosArray[index];
+                ballsCanMove[i].MoveDestination(newPos, targetPos, height);
+                tubeDestination.addBall(ballsCanMove[i]);
+                yield return new WaitForSeconds(0.5f);
+            }
+            else
+            {
+                break;
+            }
         }
 
-        ResetBallCanMove();
-        Debug.Log(amountBallCanMove.Count);
-    }
-    public void addBall(Ball newBall) // addBall
-    {
-        if (balls.Count == maxBall) return;
-
-        balls.Push(newBall);
-        ballsInTube.Add(newBall);
-        TubeFullColor();
+        ballsCanMove.Clear();
     }
 
-    public void removeBall(Ball newBall) // RemoveBall
+    public void addBall(Ball ball)
     {
-        balls.Pop();
-        ballsInTube.Remove(newBall);
+        StackBalls.Push(ball);
+        ballsInTube.Add(ball);
+
+        checkFullColor();
     }
 
-    public void ResetBallCanMove() // reset các ball đã được di chuyển đi
+    public int GetEmptySlot()
     {
-        amountBallCanMove.Clear();
+        Debug.Log(StackBalls.Count);
+        return StackBalls.Count;
     }
 
-    public int AmountBallCanMove()
+    public int GetSpace()
     {
-        if (ballsInTube.Count == 0) return 0;
-
-        return balls.Count;
+        return maxBall - StackBalls.Count;
     }
 
-    public int GetAmountBall() // lấy ra số lượng ball hiện tại
+    public ColorType GetColorType()
     {
-        if (balls.Count == 0)
-        {
-            return 0;
-        }
-
-        return balls.Count;
+        return StackBalls.Peek().BallType;
     }
 
-    public int GetSpace() //Tính toán khoảng trống cho đủ để các ball di chuyển tới không
+    public int GetAmountBall()
     {
-        return maxBall - balls.Count;
+        if(StackBalls.Count == 0) return 0;
+
+        return StackBalls.Count;
     }
 
-    public ColorType GetTypeBallTop() // lấy ra loại màu ball ở đỉnh
+    private void checkFullColor()
     {
-        if (canWin) return ColorType.NONE;
+        if (StackBalls.Count == 0) return;
 
-        if (balls.Count > 0)
-        {
-            return balls.Peek().Type;
-        }
-
-        return ColorType.NONE;
-    }
-
-    private void TubeFullColor()
-    {
-        if (balls.Count == 0) return;
         if (ballsInTube.Count == 0) return;
 
-        ColorType tmp = balls.Peek().Type; // lấy ra màu ở đỉnh tube
-        int count = 0;
+        ColorType tmp = StackBalls.Peek().BallType;
 
+        int count = 0;
         foreach (var i in ballsInTube)
         {
-            if (i.Type != tmp)
+            if (i.BallType != tmp)
             {
-                continue;
+                break;
             }
 
             count++;
         }
 
-        if (count == 4)
+        if (count == maxBall)
         {
             canWin = true;
             Debug.Log($"Tube {this.gameObject.name} win, đã đủ số màu");
-            GameManager.instance.OnYouWinHandler?.Invoke();
+            GameManager.instance.OnYouWin?.Invoke();
         }
+    }
+
+    private bool checkBallSameColor()
+    {
+        if(StackBalls.Count == 0) return false;
+        
+        if(StackBalls.Peek().BallType == tmp.BallType) return true;
+
+        return false;
     }
 }

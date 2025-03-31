@@ -9,7 +9,6 @@ public class LevelManager : MonoBehaviour
     [SerializeField] private GameObject[] ballPrefabs;
     [SerializeField] private Transform parent;
     [SerializeField] private int numberTubeEmpty;
-    [SerializeField] private SpriteRenderer sr;
 
     [SerializeField] private List<int> ballColorDumps = new List<int>();
     private int totalColor; // số bóng tối đa ở mỗi tube
@@ -22,16 +21,16 @@ public class LevelManager : MonoBehaviour
 
     void Start()
     {
-        //gameStart = false;
-        //tubes = GetComponentsInChildren<Tube>();
-        //maxTube = tubes.Length - numberTubeEmpty; // số tube có bóng
-        //totalColor = ballPrefabs.Length;
-        //totalBalls = totalColor * maxTube; // tổng số bóng của cả level
+        gameStart = false;
+        tubes = GetComponentsInChildren<Tube>();
+        maxTube = tubes.Length - numberTubeEmpty; // số tube có bóng
+        totalColor = ballPrefabs.Length;
+        totalBalls = totalColor * maxTube; // tổng số bóng của cả level
 
-        //List<int> ballColors = GenerateBall();
-        //ballColorDumps = ballColors;
+        List<int> ballColors = GenerateBall();
+        ballColorDumps = ballColors;
 
-        //StartCoroutine(InitBall(ballColors));
+        StartCoroutine(InitBall(ballColors));
     }
 
 
@@ -49,8 +48,11 @@ public class LevelManager : MonoBehaviour
                     break;
                 }
 
-                yield return new WaitForSeconds(0.75f);
+                yield return new WaitForSeconds(1f);
                 GameObject tmp = Instantiate(ballPrefabs[ballColors[ballIndex]], tubes[i].TopPos.position, Quaternion.identity);
+                tmp.GetComponent<Ball>().Move(tubes[i].PosArray[count]);
+
+
                 tmp.transform.parent = parent;
                 tubes[i].addBall(tmp.GetComponent<Ball>());
                 ballIndex++;
@@ -106,7 +108,7 @@ public class LevelManager : MonoBehaviour
 
         for (int i = 0; i < tubes.Length; i++) // Reset lại cấu hình ban đầu
         {
-            tubes[i].ResetTube();
+            //tubes[i].ResetTube();
         }
 
         StartCoroutine(InitBall(ballColorDumps));
