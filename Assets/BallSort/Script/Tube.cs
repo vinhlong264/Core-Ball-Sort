@@ -9,7 +9,6 @@ public class Tube : MonoBehaviour
     private Stack<Ball> balls = new Stack<Ball>(); // Stack chứa các ball trong tube
     [SerializeField] private List<Ball> ballsInTube = new List<Ball>(); // List chứa các ball trong tube
     [SerializeField] private List<Ball> amountBallCanMove = new List<Ball>();
-
     [SerializeField] private Transform topPos;
     private bool canWin; //biến kiểm tra xem ông này đã đủ đk thắng chưa
     private int maxBall = 4;
@@ -18,6 +17,24 @@ public class Tube : MonoBehaviour
     public bool CanWin { get => canWin; }
 
     public List<Ball> AmountCanMove { get => amountBallCanMove; }
+
+    private SpriteRenderer sr;
+    [SerializeField] private Vector2[] pos;
+
+    private void Start()
+    {
+        InitPos();
+    }
+
+    private void InitPos()
+    {
+        pos = new Vector2[4];
+        for (int i = 0; i < transform.localScale.y; i++)
+        {
+            Vector2 newPos = new Vector2(transform.localPosition.x, i - 1.5f);
+            pos[i] = newPos;
+        }
+    }
 
     public void SelectBall(System.Action callBack = null) //Chọn ball ở đỉnh
     {

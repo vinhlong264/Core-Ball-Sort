@@ -7,11 +7,12 @@ public class LevelManager : MonoBehaviour
     //Level info
     [SerializeField] private Tube[] tubes;
     [SerializeField] private GameObject[] ballPrefabs;
-    [SerializeField] private int maxBall; // số bóng tối đa ở mỗi tube
     [SerializeField] private Transform parent;
     [SerializeField] private int numberTubeEmpty;
+    [SerializeField] private SpriteRenderer sr;
 
     [SerializeField] private List<int> ballColorDumps = new List<int>();
+    private int totalColor; // số bóng tối đa ở mỗi tube
     private int maxTube; // số lượng Tube để đk win
     private int totalBalls; //Tổng số lượng bóng cần có
     private bool gameStart; // Quản lý việc khi nào game được bắt đầu
@@ -21,15 +22,16 @@ public class LevelManager : MonoBehaviour
 
     void Start()
     {
-        gameStart = false;
-        tubes = GetComponentsInChildren<Tube>();
-        maxTube = tubes.Length - numberTubeEmpty; // số tube có bóng
-        totalBalls = maxBall * maxTube; // tổng số bóng của cả level
+        //gameStart = false;
+        //tubes = GetComponentsInChildren<Tube>();
+        //maxTube = tubes.Length - numberTubeEmpty; // số tube có bóng
+        //totalColor = ballPrefabs.Length;
+        //totalBalls = totalColor * maxTube; // tổng số bóng của cả level
 
-        List<int> ballColors = GenerateBall();
-        ballColorDumps = ballColors;
+        //List<int> ballColors = GenerateBall();
+        //ballColorDumps = ballColors;
 
-        StartCoroutine(InitBall(ballColors));
+        //StartCoroutine(InitBall(ballColors));
     }
 
 
@@ -38,7 +40,7 @@ public class LevelManager : MonoBehaviour
     {
         int count = 0;
         int ballIndex = 0;
-        while (count < maxBall)
+        while (count < totalColor)
         {
             for (int i = 0; i < maxTube; i++)
             {
