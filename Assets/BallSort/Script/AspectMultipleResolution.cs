@@ -3,33 +3,51 @@
 public class AspectMultipleResolution : MonoBehaviour
 {
     private Camera _camera;
-    [Range(-1f, 1f)]
-    [SerializeField] private float adapterRange;
-    private Vector3 camPos;
-    private float defaultWith;
-    private float defaultHeight;
-    private float sizeCam;
+    [SerializeField, Range(-1f, 1f)] private float adapterRange = 0f;
+    private ScreenOrientation lastOrientation;
+    [SerializeField] private bool maintainWidth = true;
+    private float targetAspect;
 
-    private void Start()
+    private Vector3 camPos;
+    private float defaultSize;
+
+    void Start()
     {
         _camera = Camera.main;
         camPos = _camera.transform.position;
+        lastOrientation = Screen.orientation;
 
-        defaultHeight = _camera.orthographicSize; // lấy ra chiều cao mặc định của màn hình hiện tại
-        defaultWith = _camera.orthographicSize * _camera.aspect; // Lấy ra chiều rộng mặc định của màn hình hiện tại
-        AdjustCamera();
-        
-    }
+        targetAspect = 16f / 9f;
+        defaultSize = _camera.orthographicSize;
 
-    private void Update()
-    {
         AdjustCamera();
     }
-
-    private void AdjustCamera()
+    public void AdjustCamera()
     {
-        sizeCam = defaultWith / _camera.aspect;
-        _camera.orthographicSize = sizeCam;
-        transform.position = new Vector3(camPos.x, adapterRange * (defaultHeight - _camera.orthographicSize), camPos.z);
+        float currentAspect = (float)Screen.width / Screen.height;
+
+        float scaleFactor;
+        if (maintainWidth)
+        {
+            scaleFactor = currentAspect / targetAspect;
+            _camera.orthographicSize = defaultSize/scaleFactor;
+        }
+        else
+        {
+            scaleFactor = currentAspect / targetAspect;
+            _camera.orthographicSize = defaultSize*scaleFactor;
+        }
+
+        float sizeDiff = defaultSize - _camera.orthographicSize; // điều chỉnh vị trí của cameraY
+        transform.position = new Vector3(camPos.x, camPos.y + adapterRange * sizeDiff, camPos.z);
+    }
+
+    void Update()
+    {
+        if (Screen.orientation != lastOrientation)
+        {
+            AdjustCamera();
+            lastOrientation = Screen.orientation;
+        }
     }
 }

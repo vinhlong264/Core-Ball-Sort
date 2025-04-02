@@ -1,5 +1,5 @@
 ﻿using System.Collections;
-using Unity.VisualScripting;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class Ball : MonoBehaviour
@@ -14,7 +14,7 @@ public class Ball : MonoBehaviour
     }
 
 
-    public void MoveDestination(Vector2[] destinationPos , Vector2 targetPos , float height)
+    public void MoveDestination(Vector3[] destinationPos, Vector2 targetPos, float height)
     {
         StartCoroutine(MoveDestinationCroutine(destinationPos, height, () =>
         {
@@ -22,14 +22,16 @@ public class Ball : MonoBehaviour
         }));
     }
 
-    private IEnumerator MoveDestinationCroutine(Vector2[] posDestination, float height, System.Action callBack)
+    #region Croutine
+
+    private IEnumerator MoveDestinationCroutine(Vector3[] posDestination, float height, System.Action callBack)
     {
         float t = 0;
         while (t < duration)
         {
             t += Time.deltaTime;
-            transform.position = GetPos(posDestination[0], posDestination[1], t/duration, height);
-            yield return null;
+            transform.position = GetPos(posDestination[0], posDestination[1], t / duration, height);
+            yield return new WaitForEndOfFrame();
         }
         transform.position = posDestination[1];
 
@@ -40,19 +42,21 @@ public class Ball : MonoBehaviour
         float t = 0;
         Vector2 startPos = transform.position;
         Vector2 endPos = pos;
-        while(t < duration)
+        while (t < duration)
         {
             transform.position = Vector3.Lerp(startPos, endPos, t);
             t += Time.deltaTime;
-            yield return null;
+            yield return new WaitForEndOfFrame();
         }
         transform.position = endPos;
     }
 
-    private Vector2 GetPos(Vector2 start , Vector2 end , float t , float height)
+    #endregion
+
+    private Vector2 GetPos(Vector2 start, Vector2 end, float t, float height)
     {
-        float x = Mathf.Lerp(start.x , end.x , t); // tính toán chiều ngang di chuyển
-        float y = Mathf.Lerp(start .y , end.y , t) + height  * 4 * t * (1 - t); // tính toán chiều dọc di chuyển
+        float x = Mathf.Lerp(start.x, end.x, t); // tính toán chiều ngang di chuyển
+        float y = Mathf.Lerp(start.y, end.y, t) + height * 4 * t * (1 - t); // tính toán chiều dọc di chuyển
 
         return new Vector2(x, y);
     }
@@ -68,18 +72,16 @@ public enum ColorType // enum quản lý các loại ball
 [System.Serializable]
 public class StepMove
 {
-    public Ball ball; // lưu trữ ball đã di chuyển của sau các bước chọn
-    public Tube tubeSelect; // Vị trí Tube cũ của ball
-    public Tube tubeDestination; // vị trí điểm đến mới của ball
-    public Transform start; //Điểm bắt đầu di chuyển
-    public Transform end; //Điểm kết thúc di chuyển
+    public List<Ball> balls;
+    public Tube tubeOld;
+    public Tube tubeNew;
+    public List<Vector2> points;
 
-    public StepMove(Ball ball, Tube tubeSelect, Tube tubeDestination, Transform start, Transform end)
+    public StepMove(List<Ball> balls, Tube tubeOld, Tube tubeNew, List<Vector2> points)
     {
-        this.ball = ball;
-        this.tubeSelect = tubeSelect;
-        this.tubeDestination = tubeDestination;
-        this.start = start;
-        this.end = end;
+        this.balls = new List<Ball>(balls);
+        this.tubeOld = tubeOld;
+        this.tubeNew = tubeNew;
+        this.points = new List<Vector2>(points);
     }
 }

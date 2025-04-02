@@ -1,5 +1,4 @@
-﻿using System.Collections;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class InputManager : MonoBehaviour
 {
@@ -17,6 +16,9 @@ public class InputManager : MonoBehaviour
 
     void Update()
     {
+        if (!GameManager.instance.LevelManager.GameStart) return;
+
+
         if (Application.platform == RuntimePlatform.WindowsEditor || Application.platform == RuntimePlatform.WindowsPlayer)
         {
             InputDesktopHandler();
@@ -38,7 +40,7 @@ public class InputManager : MonoBehaviour
     private void InputMobileHandler()
     {
         Touch touch = Input.GetTouch(0);
-        if(touch.phase == TouchPhase.Began)
+        if (touch.phase == TouchPhase.Began)
         {
             TubeSelectHandler(raycastDectector.GetInforRaycast().collider);
         }
@@ -62,11 +64,17 @@ public class InputManager : MonoBehaviour
             if (tubeDestination == tubeSelect)
             {
                 tubeSelect.ReturnTube();
+
+
+                tubeSelect.tmp = null;
+                tubeSelect = null;
+                tubeDestination = null;
+                return;
             }
 
             if (CanMoveBall())
             {
-                tubeSelect.MoveSenquence(tubeDestination , 0.8f);
+                tubeSelect.MoveSenquence(tubeDestination, 0.8f);
             }
             else
             {
@@ -82,20 +90,23 @@ public class InputManager : MonoBehaviour
 
     private bool CanMoveBall()
     {
-        if(tubeDestination.GetAmountBall() == 0) return true; // TH Tube rỗng
+        if (tubeSelect == null) return false;
+        if (tubeDestination == null) return false;
 
-        if(tubeDestination.GetAmountBall() == 4) return false; //TH Tube đầy
+        if (tubeDestination.GetAmountBall() == 0) return true; // TH Tube rỗng
+
+        if (tubeDestination.GetAmountBall() == 4) return false; //TH Tube đầy
 
         int ballToMove = tubeSelect.BallsCanMove.Count;
         int spaceAvailable = tubeDestination.GetSpace();
 
         if (tubeSelect.tmp.BallType == tubeDestination.GetColorType()) // TH bóng trên đỉnh Tube có cùng màu
         {
-            if(ballToMove > spaceAvailable)
+            if (ballToMove > spaceAvailable)
             {
                 Debug.Log("Còn đủ chỗ trống");
                 int enoughBall = ballToMove - spaceAvailable;
-                for(int i = 0; i < enoughBall; i++)
+                for (int i = 0; i < enoughBall; i++)
                 {
                     Ball b = tubeSelect.BallsCanMove[tubeSelect.BallsCanMove.Count - 1];
                     tubeSelect.addBall(b);

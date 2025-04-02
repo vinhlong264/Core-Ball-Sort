@@ -5,11 +5,13 @@ using UnityEngine;
 public class Tube : MonoBehaviour
 {
     [SerializeField] private Transform topPos;
-    [SerializeField] private List<Ball> ballsInTube = new List<Ball>();
-    [SerializeField] private List<Ball> ballsCanMove = new List<Ball>();
-    private Stack<Ball> StackBalls = new Stack<Ball>();
+    [SerializeField] private List<Ball> ballsInTube = new List<Ball>(); // lưu các ball trong tube với mục đích có thể nhìn đc ở Inspector
+    [SerializeField] private List<Ball> ballsCanMove = new List<Ball>(); // lưu các ball sẽ di chuyển
+    private Stack<Ball> StackBalls = new Stack<Ball>(); // lưu trữ Ball
+    private List<Vector2> initPosBall = new List<Vector2>(); // lưu trữ vị trí của các ball khi được lấy ra phục vụ việc undo
+
+
     private Vector2[] posArray;
-    private bool canWin;
     private int maxBall;
 
     public Ball tmp { get; set; }
@@ -42,11 +44,18 @@ public class Tube : MonoBehaviour
 
     public void SelectBall()
     {
+        if(initPosBall.Count > 0)
+        {
+            initPosBall.Clear();
+        }
+
         tmp = StackBalls.Pop();
         ballsInTube.Remove(tmp);
         ballsCanMove.Add(tmp);
-
         prePos = tmp.transform.position;
+        initPosBall.Add(prePos);
+
+
         tmp.Move(topPos.position);
 
         while(StackBalls.Count > 0)
@@ -57,6 +66,8 @@ public class Tube : MonoBehaviour
             }
 
             Ball getBall = StackBalls.Pop();
+
+            initPosBall.Add(getBall.transform.position);
             ballsCanMove.Add(getBall);
             ballsInTube.Remove(getBall);
         }
@@ -82,7 +93,9 @@ public class Tube : MonoBehaviour
 
     IEnumerator SenquenceCroutine(Tube tubeDestination, float height)
     {
-        Vector2[] newPos = new Vector2[]
+
+        List<Ball> ballDump = new List<Ball>();
+        Vector3[] newPos = new Vector3[]
         {
             topPos.position,
             tubeDestination.topPos.position
@@ -93,7 +106,10 @@ public class Tube : MonoBehaviour
             int index = tubeDestination.GetEmptySlot();
             if (index != -1)
             {
-                Vector2 targetPos = tubeDestination.PosArray[index];
+                Vector2 targetPos = tubeDestination.PosArray[index]; // Lấy ra điểm cần đến
+
+                ballDump.Add(ballsCanMove[i]);
+
                 ballsCanMove[i].MoveDestination(newPos, targetPos, height);
                 tubeDestination.addBall(ballsCanMove[i]);
                 yield return new WaitForSeconds(0.5f);
@@ -102,6 +118,12 @@ public class Tube : MonoBehaviour
             {
                 break;
             }
+        }
+
+        if(ballDump.Count > 0 && initPosBall.Count > 0)
+        {
+            StepMove stepMove = new StepMove(ballDump, this, tubeDestination, initPosBall);
+            GameManager.instance.addStepBall(stepMove);
         }
 
         ballsCanMove.Clear();
@@ -113,6 +135,12 @@ public class Tube : MonoBehaviour
         ballsInTube.Add(ball);
 
         checkFullColor();
+    }
+
+    public void removeBall(Ball ball)
+    {
+        StackBalls.Pop();
+        ballsInTube.Remove(ball);
     }
 
     public int GetEmptySlot()
@@ -159,7 +187,6 @@ public class Tube : MonoBehaviour
 
         if (count == maxBall)
         {
-            canWin = true;
             Debug.Log($"Tube {this.gameObject.name} win, đã đủ số màu");
             GameManager.instance.OnYouWin?.Invoke();
         }
@@ -172,5 +199,15 @@ public class Tube : MonoBehaviour
         if(StackBalls.Peek().BallType == tmp.BallType) return true;
 
         return false;
+    }
+
+    public void ResetTube()
+    {
+        while(StackBalls.Count > 0)
+        {
+            StackBalls.Pop();
+        }
+
+        ballsInTube.Clear();
     }
 }

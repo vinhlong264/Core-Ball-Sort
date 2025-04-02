@@ -108,8 +108,10 @@ public class LevelManager : MonoBehaviour
 
         for (int i = 0; i < tubes.Length; i++) // Reset lại cấu hình ban đầu
         {
-            //tubes[i].ResetTube();
+            tubes[i].ResetTube();
         }
+
+        gameStart = false;
 
         StartCoroutine(InitBall(ballColorDumps));
     }
